@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 module Data.Histogram.Lazy
   ( Histogram
   , toMap
@@ -108,4 +109,8 @@ lookup k (Histogram m) = fromMaybe 0 (m M.!? k)
 
 -- | Returns true when there is no key that is nonzero in both arguments.
 disjoint :: Ord k => Histogram k -> Histogram k -> Bool
+#if MIN_VERSION_containers (0,6,2)
 disjoint (Histogram m1) (Histogram m2) = M.disjoint m1 m2
+#else
+disjoint (Histogram m1) (Histogram m2) = M.null (M.intersection m1 m2)
+#endif
