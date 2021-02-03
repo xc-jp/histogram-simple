@@ -12,6 +12,7 @@ module Data.Histogram
     reset,
     zero,
     nonzero,
+    size,
     empty,
     mapKeys,
     singleton,
@@ -43,6 +44,7 @@ instance Ord k => Monoid (Histogram k) where
   mempty = Histogram mempty
   mappend = (<>)
 
+{-# INLINE clip #-}
 clip :: Int -> Maybe Int
 clip n
   | n > 0 = Just n
@@ -82,6 +84,9 @@ nonzero k (Histogram m) = M.member k m
 -- | Check whether a key has a count of 0
 zero :: Ord k => k -> Histogram k -> Bool
 zero k = not . nonzero k
+
+size :: Histogram k -> Int
+size = sum . M.elems . toMap
 
 -- | Check whether a histogram is empty
 empty :: Histogram k -> Bool
