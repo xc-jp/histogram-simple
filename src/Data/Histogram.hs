@@ -23,7 +23,7 @@ module Data.Histogram
     disjoint,
     fromList,
     toList,
-    allKeys,
+    allElems,
   )
 where
 
@@ -113,8 +113,8 @@ isSubsetOf = isSubsetOfBy (<=)
 fromList :: Ord k => [k] -> Histogram k
 fromList = foldr increment mempty
 
-allKeys :: (Int -> Bool) -> Histogram k -> Bool
-allKeys p (Histogram m) = all p m
+allElems :: (Int -> Bool) -> Histogram k -> Bool
+allElems p (Histogram m) = all p m
 
 toList :: Histogram k -> [(k, Int)]
 toList (Histogram m) = M.toList m
