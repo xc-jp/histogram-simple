@@ -1,0 +1,4 @@
+cradle:
+  multi:
+    - path: "src"
+      config: {cradle: {cabal: {component: "lib:histogram-simple"}}}
