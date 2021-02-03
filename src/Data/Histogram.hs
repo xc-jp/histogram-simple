@@ -15,6 +15,8 @@ module Data.Histogram
     empty,
     mapKeys,
     singleton,
+    split,
+    splitLookup,
     isSubsetOf,
     isSubsetOfBy,
     disjoint,
@@ -114,6 +116,15 @@ toList (Histogram m) = M.toList m
 
 lookup :: Ord k => k -> Histogram k -> Int
 lookup k (Histogram m) = fromMaybe 0 (m M.!? k)
+
+-- | /O(n)/. The expression (@'split' k hist@) is a pair @(h1,h2)@
+-- where all keys in @h1@ are lower than @k@ and all keys in
+-- @h2@ larger than @k@. Any key equal to @k@ is found in neither @h1@ nor @h2@.
+split :: Ord k => k -> Histogram k -> (Histogram k, Histogram k)
+split k (Histogram m) = let (lt, gt) = M.split k m in (Histogram lt, Histogram gt)
+
+splitLookup :: Ord k => k -> Histogram k -> (Histogram k, Int, Histogram k)
+splitLookup k (Histogram m) = let (lt, c, gt) = M.splitLookup k m in (Histogram lt, fromMaybe 0 c, Histogram gt)
 
 (!) :: Ord k => Histogram k -> k -> Int
 (!) = flip Data.Histogram.lookup
