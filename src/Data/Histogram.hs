@@ -14,6 +14,7 @@ module Data.Histogram
     nonzero,
     size,
     empty,
+    keys,
     mapKeys,
     singleton,
     split,
@@ -91,6 +92,9 @@ size = sum . M.elems . toMap
 -- | Check whether a histogram is empty
 empty :: Histogram k -> Bool
 empty (Histogram h) = null h
+
+keys :: Histogram k -> [k]
+keys = M.keys . toMap
 
 -- | Applies a function to every key.
 --   If two keys in the original map to the same value, their counts are combined.
