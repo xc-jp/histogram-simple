@@ -1,26 +1,36 @@
 {-# LANGUAGE CPP #-}
-module Data.Histogram.Lazy
-  ( Histogram
-  , toMap
-  , increment
-  , decrement
-  , Data.Histogram.Lazy.lookup, (!)
-  , add, set, reset
-  , zero, nonzero, empty
-  , mapKeys
-  , singleton
-  , isSubsetOf, isSubsetOfBy, disjoint
-  , fromList, toList
-  , allKeys
-  ) where
 
-import Data.Maybe (fromMaybe)
+module Data.Histogram.Lazy
+  ( Histogram,
+    toMap,
+    increment,
+    decrement,
+    Data.Histogram.Lazy.lookup,
+    (!),
+    add,
+    set,
+    reset,
+    zero,
+    nonzero,
+    empty,
+    mapKeys,
+    singleton,
+    isSubsetOf,
+    isSubsetOfBy,
+    disjoint,
+    fromList,
+    toList,
+    allKeys,
+  )
+where
 
 import qualified Data.Map as M
+import Data.Maybe (fromMaybe)
 
 -- | A simple 'Data.Map'-based histogram for some key.
 newtype Histogram k = Histogram
-  { toMap :: M.Map k Int -- ^ Convert to a histogram to a map of all its nonzero values
+  { -- | Convert to a histogram to a map of all its nonzero values
+    toMap :: M.Map k Int
   }
   deriving (Eq, Show)
 
@@ -43,7 +53,8 @@ increment k (Histogram m) = Histogram $ M.insertWith (+) k 1 m
 -- | Decrease a key's count by one
 decrement :: Ord k => k -> Histogram k -> Histogram k
 decrement k (Histogram m) = Histogram $ M.update f' k m
-  where f' n = clip (n-1)
+  where
+    f' n = clip (n -1)
 
 -- | Increase a key's count by an arbitrary number.
 --   Can also be used to decrease by passing a negative value.
@@ -56,7 +67,7 @@ add n k (Histogram m) = Histogram $ M.alter f k m
 -- | Set a key's count to an exact value.
 --   Nonpositive numbers clip to 0.
 set :: Ord k => Int -> k -> Histogram k -> Histogram k
-set n k (Histogram m) = Histogram $ (if n>0 then flip M.insert n else M.delete) k m
+set n k (Histogram m) = Histogram $ (if n > 0 then flip M.insert n else M.delete) k m
 
 -- | Set a key's count to 0.
 reset :: Ord k => k -> Histogram k -> Histogram k
@@ -109,6 +120,7 @@ lookup k (Histogram m) = fromMaybe 0 (m M.!? k)
 
 -- | Returns true when there is no key that is nonzero in both arguments.
 disjoint :: Ord k => Histogram k -> Histogram k -> Bool
+
 #if MIN_VERSION_containers (0,6,2)
 disjoint (Histogram m1) (Histogram m2) = M.disjoint m1 m2
 #else
