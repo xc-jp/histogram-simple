@@ -1,5 +1,10 @@
 {-# LANGUAGE CPP #-}
 
+{-|
+Simple 'Data.Map'-based histogram.
+A histogram counts occurrences of things, i.e. 'Histogram k' represents a mapping @k -> Int@.
+Since it is backed by a 'Map' from 'Data.Map', it requires @k@ to have an @Ord@ instance.
+-}
 module Data.Histogram
   ( Histogram,
     toMap,
@@ -24,16 +29,15 @@ module Data.Histogram
     disjoint,
     fromList,
     toList,
-    allElems,
   )
 where
 
 import qualified Data.Map.Strict as M
 import Data.Maybe (fromMaybe)
 
--- | A simple 'Data.Map'-based histogram for some key.
+-- | A simple 'Data.Map'-based histogram that counts occurrences of @k@.
 newtype Histogram k = Histogram
-  { -- | Convert to a histogram to a map of all its nonzero values
+  { -- | Convert to a histogram to a map of counts of all nonzero values
     toMap :: M.Map k Int
   }
   deriving (Eq, Show)
@@ -86,13 +90,15 @@ nonzero k (Histogram m) = M.member k m
 zero :: Ord k => k -> Histogram k -> Bool
 zero k = not . nonzero k
 
+-- | Get the total number of elements in the map, i.e. the sum of all bins.
 size :: Histogram k -> Int
 size = sum . M.elems . toMap
 
 -- | Check whether a histogram is empty
 empty :: Histogram k -> Bool
-empty (Histogram h) = null h
+empty = null . toMap
 
+-- | Get a list of all non-zero keys.
 keys :: Histogram k -> [k]
 keys = M.keys . toMap
 
@@ -109,19 +115,16 @@ singleton k = Histogram $ M.singleton k 1
 isSubsetOfBy :: Ord k => (Int -> Int -> Bool) -> Histogram k -> Histogram k -> Bool
 isSubsetOfBy f (Histogram h1) (Histogram h2) = M.isSubmapOfBy f h1 h2
 
--- | @isSubsetOf h1 h2@ returns 'True' if no key in has a greater count in @h1@ than in @h2@.
+-- | @isSubsetOf h1 h2@ returns 'True' if no key has a greater count in @h1@ than in @h2@.
 isSubsetOf :: Ord k => Histogram k -> Histogram k -> Bool
 isSubsetOf = isSubsetOfBy (<=)
 
--- | Construct a histogram from a list of keys.
+-- | Construct a histogram by counting occurrences in a list of keys.
 fromList :: Ord k => [k] -> Histogram k
 fromList = foldr increment mempty
 
-allElems :: (Int -> Bool) -> Histogram k -> Bool
-allElems p (Histogram m) = all p m
-
 toList :: Histogram k -> [(k, Int)]
-toList (Histogram m) = M.toList m
+toList = M.toList . toMap
 
 lookup :: Ord k => k -> Histogram k -> Int
 lookup k (Histogram m) = fromMaybe 0 (m M.!? k)
@@ -138,7 +141,7 @@ splitLookup k (Histogram m) = let (lt, c, gt) = M.splitLookup k m in (Histogram 
 (!) :: Ord k => Histogram k -> k -> Int
 (!) = flip Data.Histogram.lookup
 
--- | Returns true when there is no key that is nonzero in both arguments.
+-- | @'disjoint' k1 k2@ returns @True@ when there is no key that is nonzero in both @k1@ and @k2@.
 disjoint :: Ord k => Histogram k -> Histogram k -> Bool
 
 #if MIN_VERSION_containers (0,6,2)
