@@ -1,5 +1,5 @@
 name:               histogram-simple
-version:            1.1
+version:            1.2
 synopsis:           Simple Data.Map-based histogram
 homepage:           https://github.com/xc-jp/histogram-simple#readme
 license:            BSD3

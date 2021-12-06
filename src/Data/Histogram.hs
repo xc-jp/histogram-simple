@@ -125,7 +125,7 @@ singleton k = Histogram $ M.singleton k 1
 
 singletonCount :: Ord k => k -> Int -> Histogram k
 singletonCount k n
-  | n > 1 = Histogram $ M.singleton k n
+  | n > 0 = Histogram $ M.singleton k n
   | otherwise = mempty
 
 -- | @isSubsetOfBy f h1 h2@ returns 'True' if every key in @h1@ compares to 'True' to its corresponding key in @h2@ by @f@.
