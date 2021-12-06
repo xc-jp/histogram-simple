@@ -1,10 +1,9 @@
 {-# LANGUAGE CPP #-}
 
-{-|
-Simple 'Data.Map'-based histogram.
-A histogram counts occurrences of things, i.e. 'Histogram k' represents a mapping @k -> Int@.
-Since it is backed by a 'Map' from 'Data.Map', it requires @k@ to have an @Ord@ instance.
--}
+-- |
+-- Simple 'Data.Map'-based histogram.
+-- A histogram counts occurrences of things, i.e. 'Histogram k' represents a mapping @k -> Int@.
+-- Since it is backed by a 'Map' from 'Data.Map', it requires @k@ to have an @Ord@ instance.
 module Data.Histogram
   ( Histogram,
     toMap,
@@ -22,13 +21,18 @@ module Data.Histogram
     keys,
     mapKeys,
     singleton,
+    singletonCount,
     split,
     splitLookup,
     isSubsetOf,
     isSubsetOfBy,
     disjoint,
     fromList,
+    fromCountList,
+    flatMap,
     toList,
+    fromMap,
+    unsafeFromMap,
   )
 where
 
@@ -55,6 +59,14 @@ clip n
   | n > 0 = Just n
   | otherwise = Nothing
 
+-- | Construct a histogram from a map, removing all elements smaller than 1
+fromMap :: M.Map k Int -> Histogram k
+fromMap = Histogram . M.mapMaybe clip
+
+-- | Construct a histogram directly from a map, without checking if every element is above 1
+unsafeFromMap :: M.Map k Int -> Histogram k
+unsafeFromMap = Histogram
+
 -- | Increase a key's count by one
 increment :: Ord k => k -> Histogram k -> Histogram k
 increment k (Histogram m) = Histogram $ M.insertWith (+) k 1 m
@@ -63,7 +75,7 @@ increment k (Histogram m) = Histogram $ M.insertWith (+) k 1 m
 decrement :: Ord k => k -> Histogram k -> Histogram k
 decrement k (Histogram m) = Histogram $ M.update f' k m
   where
-    f' n = clip (n -1)
+    f' n = clip (n - 1)
 
 -- | Increase a key's count by an arbitrary number.
 --   Can also be used to decrease by passing a negative value.
@@ -111,6 +123,11 @@ mapKeys f (Histogram m) = Histogram $ M.mapKeysWith (+) f m
 singleton :: k -> Histogram k
 singleton k = Histogram $ M.singleton k 1
 
+singletonCount :: Ord k => k -> Int -> Histogram k
+singletonCount k n
+  | n > 1 = Histogram $ M.singleton k n
+  | otherwise = mempty
+
 -- | @isSubsetOfBy f h1 h2@ returns 'True' if every key in @h1@ compares to 'True' to its corresponding key in @h2@ by @f@.
 isSubsetOfBy :: Ord k => (Int -> Int -> Bool) -> Histogram k -> Histogram k -> Bool
 isSubsetOfBy f (Histogram h1) (Histogram h2) = M.isSubmapOfBy f h1 h2
@@ -122,6 +139,12 @@ isSubsetOf = isSubsetOfBy (<=)
 -- | Construct a histogram by counting occurrences in a list of keys.
 fromList :: Ord k => [k] -> Histogram k
 fromList = foldr increment mempty
+
+fromCountList :: Ord k => [(k,Int)] -> Histogram k
+fromCountList = foldMap (uncurry singletonCount)
+
+flatMap :: Ord k' => (k -> Int -> Histogram k') -> Histogram k -> Histogram k'
+flatMap f = foldMap (uncurry f) . toList
 
 toList :: Histogram k -> [(k, Int)]
 toList = M.toList . toMap
